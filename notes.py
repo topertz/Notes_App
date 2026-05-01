@@ -28,6 +28,8 @@ def delete():
         messagebox.showerror("Hiba", "A lista üres!")
     else:
         content.delete(0, tk.END)
+        notes_data.clear()
+        autosave()
 
 def choose(event):
     selected = content.curselection()
@@ -37,12 +39,11 @@ def choose(event):
         enteredText.insert(tk.END, text)
 
 def save():
-    notes = list(content.get(0, tk.END))
-    if len(notes) == 0:
+    if len(notes_data) == 0:
         messagebox.showerror("Hiba", "Nincs mit menteni!")
         return
     with open('notes.json', 'w', encoding='utf-8') as f:
-        json.dump(notes, f, indent=4)
+        json.dump(notes_data, f, indent=4)
     messagebox.showinfo("Mentés", "Sikeres mentés!")
 
 def load():
@@ -66,19 +67,22 @@ def search(event=None):
     content.delete(0, tk.END)
     if query == "":
         for note in notes_data:
-            content.insert(
-                tk.END,
-                f"[{note['priority']}] {note['text']} ({note['time']})"
-            )
+            content.insert(tk.END, f"[{note['priority']}] {note['text']} ({note['time']})")
         return
     for note in notes_data:
         if query in note['text'].lower():
-            content.insert(
-                tk.END,
-                f"[{note['priority']}] {note['text']} ({note['time']})"
-            )
+            content.insert(tk.END, f"[{note['priority']}] {note['text']} ({note['time']})")
+
+def suggest(event=None):
+    current = enteredText.get('1.0', tk.END).strip().lower()
+    for note in notes_data:
+        if note['text'].lower().startswith(current) and current != '':
+            enteredText.delete('1.0', tk.END)
+            enteredText.insert(tk.END, note['text'])
+            break
 
 enteredText = tk.Text(root, width='20', height='1')
+enteredText.bind("<KeyRelease>", suggest)
 addButton = tk.Button(root, text='Add', bg='lightblue', command=addText)
 deleteButton = tk.Button(root, text='Delete', bg='red', command=delete)
 content = tk.Listbox(root, width='40', height='10')
